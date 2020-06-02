@@ -1,4 +1,7 @@
-﻿using System;
+﻿using Microsoft.Graph;
+using Microsoft.Toolkit.Graph.Providers;
+using Microsoft.Toolkit.Uwp.UI.Controls;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -25,6 +28,50 @@ namespace GraphTutorial
         public AppFolderPage()
         {
             this.InitializeComponent();
+        }
+
+        private void ShowNotification(string message)
+        {
+            // Get the main page that contains the InAppNotification
+            var mainPage = (Window.Current.Content as Frame).Content as MainPage;
+
+            // Get the notification control
+            var notification = mainPage.FindName("Notification") as InAppNotification;
+
+            notification.Show(message);
+        }
+
+        protected override async void OnNavigatedTo(NavigationEventArgs e)
+        {
+            // Get the Graph client from the provider
+            var graphClient = ProviderManager.Instance.GlobalProvider.Graph;
+
+            try
+            {
+                // Get the events
+                DriveItem drive = await graphClient.Me.Drive.Special.AppRoot
+                    .Request().GetAsync();
+
+                IDriveItemChildrenCollectionPage files = await graphClient.Me.Drive.Special.AppRoot.Children
+                    .Request().GetAsync();
+
+                foreach (var item in files)
+                {
+                    OutputText.Text += $"Name: {item.Name} Description: {item.Description} \n";
+                }
+
+            }
+            catch (ServiceException ex)
+            {
+                ShowNotification($"Exception getting events: {ex.Message}");
+            }
+
+            base.OnNavigatedTo(e);
+        }
+
+        private void GetFilesBTN_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }
