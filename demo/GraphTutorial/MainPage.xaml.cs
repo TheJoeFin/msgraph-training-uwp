@@ -71,6 +71,7 @@ namespace GraphTutorial
 
             // Toggle controls that require auth
             Calendar.IsEnabled = isAuthenticated;
+            Files.IsEnabled = isAuthenticated;
         }
         // </SetAuthStateSnippet>
 

@@ -55,9 +55,16 @@ namespace GraphTutorial
                 IDriveItemChildrenCollectionPage files = await graphClient.Me.Drive.Special.AppRoot.Children
                     .Request().GetAsync();
 
-                foreach (var item in files)
+                foreach (DriveItem item in files)
                 {
-                    OutputText.Text += $"Name: {item.Name} Description: {item.Description} \n";
+                    if (item.Folder != null)
+                    {
+                        OutputText.Text += $"📁 Name: {item.Name} Description: {item.Description} \n";
+
+                    }
+                    else
+                        OutputText.Text += "📄 Name: {item.Name} Description: {item.Description} \n";
+
                 }
 
             }

@@ -18,7 +18,10 @@
                 Get Files
             </Button>
 
-            <TextBlock x:Name="OutputText" IsTextSelectionEnabled="True" />
+            <TextBlock
+                x:Name="OutputText"
+                FontSize="14"
+                IsTextSelectionEnabled="True" />
         </StackPanel>
     </Grid>
 </Page>
