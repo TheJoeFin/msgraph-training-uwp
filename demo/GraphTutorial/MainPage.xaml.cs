@@ -84,6 +84,9 @@ namespace GraphTutorial
                 case "calendar":
                     RootFrame.Navigate(typeof(CalendarPage));
                     break;
+                case "files":
+                    RootFrame.Navigate(typeof(AppFolderPage));
+                    break;
                 case "home":
                 default:
                     RootFrame.Navigate(typeof(HomePage));
