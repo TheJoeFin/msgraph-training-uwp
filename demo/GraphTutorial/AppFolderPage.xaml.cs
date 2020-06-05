@@ -3,6 +3,7 @@ using Microsoft.Toolkit.Graph.Providers;
 using Microsoft.Toolkit.Uwp.UI.Controls;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -29,6 +30,8 @@ namespace GraphTutorial
         {
             this.InitializeComponent();
         }
+
+        public ObservableCollection<DriveItem> FileItems { get; set; } = new ObservableCollection<DriveItem>();
 
         private void ShowNotification(string message)
         {
@@ -59,11 +62,11 @@ namespace GraphTutorial
                 {
                     if (item.Folder != null)
                     {
-                        OutputText.Text += $"📁 Name: {item.Name} Description: {item.Description} \n";
+                        //OutputText.Text += $"📁 Name: {item.Name} Description: {item.Description} \n";
 
                     }
                     else
-                        OutputText.Text += "📄 Name: {item.Name} Description: {item.Description} \n";
+                        FileItems.Add(item);
 
                 }
 
@@ -76,9 +79,54 @@ namespace GraphTutorial
             base.OnNavigatedTo(e);
         }
 
-        private void GetFilesBTN_Click(object sender, RoutedEventArgs e)
+        private async void GetFilesBTN_Click(object sender, RoutedEventArgs e)
         {
+            var graphClient = ProviderManager.Instance.GlobalProvider.Graph;
 
+
+            if (string.IsNullOrWhiteSpace(FileTitleTXBX.Tag.ToString()))
+            {
+                // save a new DriveItem
+                Microsoft.Graph.File newFile = new Microsoft.Graph.File();
+                var fileContents= "";
+                FileBodyREB.TextDocument.GetText(Windows.UI.Text.TextGetOptions.FormatRtf, out fileContents);
+
+                DriveItem newDI = new DriveItem
+                {
+                    Name = FileTitleTXBX.Text,
+                };
+
+                using(StreamWriter sw = new StreamWriter(FileTitleTXBX.Text + ".txt"))
+                {
+                    sw.Write(newDI.Content);
+                }
+
+                var response = await graphClient.Me.Drive.Special.AppRoot
+                    .Request().CreateAsync(newDI);
+
+
+                //  // get reference to stream of file in OneDrive
+                //  var fileName = "myNewSmallFile.txt";
+                //  var currentFolder = System.IO.Directory.GetCurrentDirectory();
+                //  var filePath = Path.Combine(currentFolder, fileName);
+                    
+                //  // get a stream of the local file
+                //  FileStream fileStream = new FileStream(filePath, FileMode.Open);
+                    
+                //  // upload the file to OneDrive
+                //  GraphServiceClient graphClient = GetAuthenticatedGraphClient(...);
+                //  var uploadedFile = graphClient.Me.Drive.Root
+                //                                .ItemWithPath(fileName)
+                //                                .Content
+                //                                .Request()
+                //                                .PutAsync<DriveItem>(fileStream)
+                //                                .Result;
+
+            }
+            else
+            {
+                // Update the drive item
+            }
         }
     }
 }
