@@ -12,8 +12,8 @@
     <Grid>
 
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="200" />
             <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="3*" />
         </Grid.ColumnDefinitions>
 
         <StackPanel Grid.Column="0" Orientation="Vertical">
@@ -24,8 +24,9 @@
 
             <ListView
                 x:Name="FilesListView"
-                ItemClick="ListView_ItemClick"
-                ItemsSource="{x:Bind FileItems, Mode=TwoWay}">
+                IsItemClickEnabled="True"
+                ItemsSource="{x:Bind FileItems, Mode=TwoWay}"
+                SelectionChanged="FilesListView_SelectionChanged">
                 <ListView.ItemTemplate>
                     <DataTemplate x:DataType="graph:DriveItem">
                         <Grid Height="32" VerticalAlignment="Center">
@@ -39,14 +40,27 @@
         <RelativePanel Grid.Column="1">
             <Button
                 x:Name="GetFilesBTN"
-                Margin="0,8,8,8"
+                Margin="0,8,0,8"
                 Click="GetFilesBTN_Click"
                 CornerRadius="4"
                 IsEnabled="False"
-                RelativePanel.AlignRightWithPanel="True">
+                RelativePanel.LeftOf="CloseFileBTN">
                 <StackPanel Orientation="Horizontal">
                     <SymbolIcon Margin="0,0,6,0" Symbol="Save" />
                     <TextBlock Text="Save" />
+                </StackPanel>
+            </Button>
+
+            <Button
+                x:Name="CloseFileBTN"
+                Margin="8"
+                Background="Red"
+                Click="CloseFileBTN_Click"
+                CornerRadius="4"
+                RelativePanel.AlignRightWithPanel="True">
+                <StackPanel Orientation="Horizontal">
+                    <SymbolIcon Margin="0,0,6,0" Symbol="Clear" />
+                    <TextBlock Text="Close" />
                 </StackPanel>
             </Button>
 

@@ -7,6 +7,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Text;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Storage;
@@ -64,7 +65,6 @@ namespace GraphTutorial
                     if (item.Folder != null)
                     {
                         //OutputText.Text += $"📁 Name: {item.Name} Description: {item.Description} \n";
-
                     }
                     else
                         FileItems.Add(item);
@@ -84,34 +84,31 @@ namespace GraphTutorial
         {
             var graphClient = ProviderManager.Instance.GlobalProvider.Graph;
 
+            // save a new DriveItem
+            var fileContents= "";
+            FileBodyREB.TextDocument.GetText(Windows.UI.Text.TextGetOptions.UseObjectText, out fileContents);
+
+            DriveItem newDI = new DriveItem
+            {
+                Name = FileTitleTXBX.Text,
+            };
+
+            StorageFolder localFolder = ApplicationData.Current.LocalCacheFolder;
+            var fileName = $"{FileTitleTXBX.Text}.txt";
+            StorageFile sf = await localFolder.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting);
+            var filePath = Path.Combine(sf.Path, fileName);
+
+            await FileIO.WriteTextAsync(sf, fileContents);
+            FileStream fileStream = new FileStream(sf.Path, FileMode.Open);
 
             if (FileTitleTXBX.Tag == null)
             {
-                // save a new DriveItem
-                Microsoft.Graph.File newFile = new Microsoft.Graph.File();
-                var fileContents= "";
-                FileBodyREB.TextDocument.GetText(Windows.UI.Text.TextGetOptions.UseObjectText, out fileContents);
-
-                DriveItem newDI = new DriveItem
-                {
-                    Name = FileTitleTXBX.Text,
-                };
-
-                StorageFolder localFolder = ApplicationData.Current.LocalCacheFolder;
-                var fileName = $"{FileTitleTXBX.Text}.txt";
-                StorageFile sf = await localFolder.CreateFileAsync(fileName);
-                var filePath = Path.Combine(sf.Path, fileName);
-
-                await FileIO.WriteTextAsync(sf, fileContents);
-                FileStream fileStream = new FileStream(sf.Path, FileMode.Open);
                 
                 DriveItem uploadedFile = await graphClient.Me.Drive.Special.AppRoot
                                                .ItemWithPath(fileName)
                                                .Content
                                                .Request()
                                                .PutAsync<DriveItem>(fileStream);
-                fileStream.Close();
-                fileStream.Dispose();
                 
 
                 if (uploadedFile != null)
@@ -119,8 +116,23 @@ namespace GraphTutorial
             }
             else
             {
-                // Update the drive item
+                string IDString = FileTitleTXBX.Tag as string;
+
+                if (string.IsNullOrWhiteSpace(IDString))
+                    return;
+
+                newDI.Id = IDString;
+                DriveItem uploadedFile = await graphClient.Me.Drive.Special.AppRoot
+                                               .ItemWithPath(fileName)
+                                               .Content
+                                               .Request()
+                                               .PutAsync<DriveItem>(fileStream);
+
+
             }
+            
+            fileStream.Close();
+            fileStream.Dispose();
         }
 
         private void FileTitleTXBX_TextChanged(object sender, TextChangedEventArgs e)
@@ -133,9 +145,44 @@ namespace GraphTutorial
 
         }
 
-        private void ListView_ItemClick(object sender, ItemClickEventArgs e)
+        private async void FilesListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            DriveItem clickedItem = FilesListView.SelectedItem as DriveItem;
 
+            if (clickedItem == null)
+                return;
+
+            GraphServiceClient graphClient = ProviderManager.Instance.GlobalProvider.Graph;
+
+            Stream stream = await graphClient.Me.Drive.Items[clickedItem.Id].Content
+                            .Request()
+                            .GetAsync();
+
+            string streamContent = "";
+            byte[] result = new byte[stream.Length];
+
+            using (stream)
+            {
+                await stream.ReadAsync(result, 0, (int)stream.Length);
+            }
+
+            if (result.Length > 0)
+            {
+                string resultString = ASCIIEncoding.ASCII.GetString(result);
+                FileBodyREB.TextDocument.SetText(Windows.UI.Text.TextSetOptions.None, resultString);
+
+                FileTitleTXBX.Text = clickedItem.Name.Replace(".txt", "");
+                FileTitleTXBX.Tag = clickedItem.Id;
+            }
+        }
+
+        private void CloseFileBTN_Click(object sender, RoutedEventArgs e)
+        {
+            FileBodyREB.TextDocument.SetText(Windows.UI.Text.TextSetOptions.None, "");
+            FileTitleTXBX.Text = "";
+            FileTitleTXBX.Tag = null;
+
+            FilesListView.SelectedIndex = -1;
         }
     }
 }
