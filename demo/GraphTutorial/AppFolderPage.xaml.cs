@@ -9,6 +9,7 @@ using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.Storage;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
@@ -84,49 +85,57 @@ namespace GraphTutorial
             var graphClient = ProviderManager.Instance.GlobalProvider.Graph;
 
 
-            if (string.IsNullOrWhiteSpace(FileTitleTXBX.Tag.ToString()))
+            if (FileTitleTXBX.Tag == null)
             {
                 // save a new DriveItem
                 Microsoft.Graph.File newFile = new Microsoft.Graph.File();
                 var fileContents= "";
-                FileBodyREB.TextDocument.GetText(Windows.UI.Text.TextGetOptions.FormatRtf, out fileContents);
+                FileBodyREB.TextDocument.GetText(Windows.UI.Text.TextGetOptions.UseObjectText, out fileContents);
 
                 DriveItem newDI = new DriveItem
                 {
                     Name = FileTitleTXBX.Text,
                 };
 
-                using(StreamWriter sw = new StreamWriter(FileTitleTXBX.Text + ".txt"))
-                {
-                    sw.Write(newDI.Content);
-                }
+                StorageFolder localFolder = ApplicationData.Current.LocalCacheFolder;
+                var fileName = $"{FileTitleTXBX.Text}.txt";
+                StorageFile sf = await localFolder.CreateFileAsync(fileName);
+                var filePath = Path.Combine(sf.Path, fileName);
 
-                var response = await graphClient.Me.Drive.Special.AppRoot
-                    .Request().CreateAsync(newDI);
+                await FileIO.WriteTextAsync(sf, fileContents);
+                FileStream fileStream = new FileStream(sf.Path, FileMode.Open);
+                
+                DriveItem uploadedFile = await graphClient.Me.Drive.Special.AppRoot
+                                               .ItemWithPath(fileName)
+                                               .Content
+                                               .Request()
+                                               .PutAsync<DriveItem>(fileStream);
+                fileStream.Close();
+                fileStream.Dispose();
+                
 
-
-                //  // get reference to stream of file in OneDrive
-                //  var fileName = "myNewSmallFile.txt";
-                //  var currentFolder = System.IO.Directory.GetCurrentDirectory();
-                //  var filePath = Path.Combine(currentFolder, fileName);
-                    
-                //  // get a stream of the local file
-                //  FileStream fileStream = new FileStream(filePath, FileMode.Open);
-                    
-                //  // upload the file to OneDrive
-                //  GraphServiceClient graphClient = GetAuthenticatedGraphClient(...);
-                //  var uploadedFile = graphClient.Me.Drive.Root
-                //                                .ItemWithPath(fileName)
-                //                                .Content
-                //                                .Request()
-                //                                .PutAsync<DriveItem>(fileStream)
-                //                                .Result;
-
+                if (uploadedFile != null)
+                    FileItems.Add(uploadedFile);
             }
             else
             {
                 // Update the drive item
             }
+        }
+
+        private void FileTitleTXBX_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(FileTitleTXBX.Text))
+                GetFilesBTN.IsEnabled = false;
+            else
+                GetFilesBTN.IsEnabled = true;
+
+
+        }
+
+        private void ListView_ItemClick(object sender, ItemClickEventArgs e)
+        {
+
         }
     }
 }

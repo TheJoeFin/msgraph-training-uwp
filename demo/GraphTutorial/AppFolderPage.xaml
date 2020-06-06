@@ -12,7 +12,7 @@
     <Grid>
 
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="300" />
+            <ColumnDefinition Width="200" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
@@ -22,11 +22,14 @@
                 Style="{StaticResource SubheaderTextBlockStyle}"
                 Text="Files" />
 
-            <ListView ItemsSource="{x:Bind FileItems, Mode=TwoWay}">
+            <ListView
+                x:Name="FilesListView"
+                ItemClick="ListView_ItemClick"
+                ItemsSource="{x:Bind FileItems, Mode=TwoWay}">
                 <ListView.ItemTemplate>
                     <DataTemplate x:DataType="graph:DriveItem">
-                        <Grid Height="60" VerticalAlignment="Center">
-                            <TextBlock Text="{x:Bind Name}" />
+                        <Grid Height="32" VerticalAlignment="Center">
+                            <TextBlock Margin="4" Text="{x:Bind Name}" />
                         </Grid>
                     </DataTemplate>
                 </ListView.ItemTemplate>
@@ -39,9 +42,10 @@
                 Margin="0,8,8,8"
                 Click="GetFilesBTN_Click"
                 CornerRadius="4"
+                IsEnabled="False"
                 RelativePanel.AlignRightWithPanel="True">
-                <StackPanel Orientation="Horizontal" >
-                    <SymbolIcon Symbol="Save"  Margin="0,0,6,0"/>
+                <StackPanel Orientation="Horizontal">
+                    <SymbolIcon Margin="0,0,6,0" Symbol="Save" />
                     <TextBlock Text="Save" />
                 </StackPanel>
             </Button>
@@ -50,7 +54,8 @@
                 x:Name="FileTitleTXBX"
                 Margin="8"
                 RelativePanel.AlignLeftWithPanel="True"
-                RelativePanel.LeftOf="GetFilesBTN" />
+                RelativePanel.LeftOf="GetFilesBTN"
+                TextChanged="FileTitleTXBX_TextChanged" />
 
             <RichEditBox
                 x:Name="FileBodyREB"
